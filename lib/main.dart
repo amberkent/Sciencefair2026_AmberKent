@@ -120,9 +120,64 @@
 //     );
 //   }
 // }
+// import 'dart:io';
+// import 'package:flutter/material.dart';
+// import 'package:image_picker/image_picker.dart';
+//
+// void main() => runApp(MaterialApp(home: PhotoApp()));
+//
+// class PhotoApp extends StatefulWidget {
+//   @override
+//   _PhotoAppState createState() => _PhotoAppState();
+// }
+//
+// class _PhotoAppState extends State<PhotoApp> {
+//   File? _image; // To store the selected image file
+//   final _picker = ImagePicker();
+//
+//   // Logic to pick an image from Gallery or Camera
+//   Future<void> _getImage(ImageSource source) async {
+//     final pickedFile = await _picker.pickImage(source: source);
+//
+//     if (pickedFile != null) {
+//       setState(() {
+//         _image = File(pickedFile.path);
+//       });
+//     }
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: Text("Snacksnap")),
+//       body: Center(
+//         child: _image == null
+//             ? Text('No image selected.')
+//             : Image.file(_image!), // Displays the selected file
+//       ),
+//       floatingActionButton: Column(
+//         mainAxisAlignment: MainAxisAlignment.end,
+//         children: [
+//           FloatingActionButton(
+//             onPressed: () => _getImage(ImageSource.camera),
+//             child: Icon(Icons.camera_alt),
+//             heroTag: "btn1",
+//           ),
+//           SizedBox(height: 10),
+//           FloatingActionButton(
+//             onPressed: () => _getImage(ImageSource.gallery),
+//             child: Icon(Icons.photo_library),
+//             heroTag: "btn2",
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 
 void main() => runApp(MaterialApp(home: PhotoApp()));
 
@@ -132,10 +187,10 @@ class PhotoApp extends StatefulWidget {
 }
 
 class _PhotoAppState extends State<PhotoApp> {
-  File? _image; // To store the selected image file
+  File? _image;
   final _picker = ImagePicker();
+  final BarcodeScanner _barcodeScanner = BarcodeScanner(formats: [BarcodeFormat.all]);
 
-  // Logic to pick an image from Gallery or Camera
   Future<void> _getImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
 
@@ -146,6 +201,57 @@ class _PhotoAppState extends State<PhotoApp> {
     }
   }
 
+  Future<void> _takePhotoAndScan() async {
+    // Take the photo
+    final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+
+    if (photo == null) return;
+
+    // Update the displayed image
+    setState(() {
+      _image = File(photo.path);
+    });
+
+    // Prepare the image for ML Kit
+    final inputImage = InputImage.fromFilePath(photo.path);
+
+    // Scan the image for barcodes
+    final List<Barcode> barcodes = await _barcodeScanner.processImage(inputImage);
+
+    // Handle the results
+    if (barcodes.isEmpty) {
+      _showMessage("No barcode found. Try getting closer or improving light.");
+    } else {
+      String results = "";
+      for (Barcode barcode in barcodes) {
+        results += "Found: ${barcode.rawValue}\n";
+      }
+      _showMessage(results);
+    }
+  }
+
+  void _showMessage(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Scan Result"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          )
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _barcodeScanner.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,14 +259,14 @@ class _PhotoAppState extends State<PhotoApp> {
       body: Center(
         child: _image == null
             ? Text('No image selected.')
-            : Image.file(_image!), // Displays the selected file
+            : Image.file(_image!),
       ),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
-            onPressed: () => _getImage(ImageSource.camera),
-            child: Icon(Icons.camera_alt),
+            onPressed: _takePhotoAndScan, // Now scans barcode!
+            child: Icon(Icons.qr_code_scanner),
             heroTag: "btn1",
           ),
           SizedBox(height: 10),
