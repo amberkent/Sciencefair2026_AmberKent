@@ -77,26 +77,24 @@
 //
 //     if (barcodes.isEmpty) {
 //       _showMessage("No barcode found", "Try getting closer or improving light.");
-//       setState(() { _image = null; }); // Reset if nothing found
+//       setState(() { _image = null; });
 //     } else {
 //       String barcodeValue = barcodes.first.rawValue ?? "";
 //       final foodData = await _lookupFoodData(barcodeValue);
 //
 //       if (foodData != null && mounted) {
-//         // NAVIGATE to the new page
 //         Navigator.of(context).push(
 //           MaterialPageRoute(
 //             builder: (context) => NutritionDetailsPage(barcode: barcodeValue, foodData: foodData),
 //           ),
 //         ).then((_) {
-//           // THIS RUNS WHEN YOU CLICK THE BACK ARROW
 //           setState(() {
-//             _image = null; // Clears the image so the scan button shows again
+//             _image = null;
 //           });
 //         });
 //       } else {
 //         _showMessage("Barcode: $barcodeValue", "Food not found in database");
-//         setState(() { _image = null; }); // Reset if API fails
+//         setState(() { _image = null; });
 //       }
 //     }
 //   }
@@ -121,50 +119,140 @@
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
-//         backgroundColor: Colors.white,
-//         appBar: AppBar(
-//           title: Text("Snacksnap", style: GoogleFonts.pacifico(fontSize: 32, fontWeight: FontWeight.bold,color: Colors.white),
-//             backgroundColor: Colors.blue,
+//       backgroundColor: Colors.white,
+//       appBar: AppBar(
+//         title: Text(
+//           "Snacksnap",
+//           style: GoogleFonts.pacifico(
+//             fontSize: 32,
+//             fontWeight: FontWeight.bold,
+//             color: Colors.white,
 //           ),
-//           bottom: Stack(
-//             children: [
-//               Center(
-//                 child: _image == null
-//                     ? Column(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: [
-//                     SizedBox(
-//                       width: 300, height: 300,
-//                       child: FloatingActionButton(
-//                         heroTag: "scanBtn",
-//                         onPressed: _takePhotoAndScan,
-//                         backgroundColor: Colors.lightBlue[50],
-//                         foregroundColor: Colors.blue,
-//                         child: const Icon(Icons.qr_code_scanner, size: 270),
-//                       ),
-//                     ),
-//                   ],
-//                 )
-//                     : const CircularProgressIndicator(color: Colors.white), // Show loading while scanning
-//               ),
-//               if (_image == null)
-//                 Positioned(
-//                   top: 110, right: 130,
-//                   child: Column(
-//                     children: [
-//                       Text("Click and\nscan barcode",
-//                           style: GoogleFonts.pacifico(fontSize: 30, color: Colors.blue, fontWeight: FontWeight.bold),
-//                           textAlign: TextAlign.center
-//                       ),
-//                       const SizedBox(height: 10),
-//                       const Icon(Icons.arrow_downward, size: 40, color: Colors.blue),
-//                     ],
+//         ),
+//         backgroundColor: Colors.blue,
+//       ),
+//       body: Stack(
+//         children: [
+//           Center(
+//             child: _image == null
+//                 ? Column(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 SizedBox(
+//                   width: 300,
+//                   height: 300,
+//                   child: FloatingActionButton(
+//                     heroTag: "scanBtn",
+//                     onPressed: _takePhotoAndScan,
+//                     backgroundColor: Colors.lightBlue[50],
+//                     foregroundColor: Colors.blue,
+//                     child: const Icon(Icons.qr_code_scanner, size: 270),
 //                   ),
 //                 ),
-//             ],
+//               ],
+//             )
+//                 : const CircularProgressIndicator(color: Colors.blue),
 //           ),
-//         );
+//           if (_image == null)
+//             Positioned(
+//               top: 110,
+//               right: 130,
+//               child: Column(
+//                 children: [
+//                   Text(
+//                     "Click and\nscan barcode",
+//                     style: GoogleFonts.pacifico(
+//                       fontSize: 30,
+//                       color: Colors.blue,
+//                       fontWeight: FontWeight.bold,
+//                     ),
+//                     textAlign: TextAlign.center,
+//                   ),
+//                   const SizedBox(height: 10),
+//                   const Icon(Icons.arrow_downward, size: 40, color: Colors.blue),
+//                 ],
+//               ),
+//             ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+//
+// // --- HYPER-PALATABLE FOOD CHECKER (Based on Fazzino et al., 2019) ---
+// class HyperPalatableChecker {
+//   final bool isHyperPalatable;
+//   final List<String> problematicNutrients;
+//   final Color color;
+//   final IconData icon;
+//
+//   HyperPalatableChecker({
+//     required this.isHyperPalatable,
+//     required this.problematicNutrients,
+//     required this.color,
+//     required this.icon,
+//   });
+//
+//   static HyperPalatableChecker evaluate(Map<String, dynamic> nutriments) {
+//     // Extract values per 100g
+//     double caloriesTotal = (nutriments['energy-kcal_100g'] ?? 0).toDouble();
+//     double fatG = (nutriments['fat_100g'] ?? 0).toDouble();
+//     double sugarsG = (nutriments['sugars_100g'] ?? 0).toDouble();
+//     double carbsG = (nutriments['carbohydrates_100g'] ?? 0).toDouble();
+//     double sodiumG = (nutriments['sodium_100g'] ?? 0).toDouble();
+//
+//     // Calculate percentages
+//     double fatKcal = fatG * 9;
+//     double sugarKcal = sugarsG * 4;
+//     double carbsKcal = carbsG * 4;
+//
+//     double percentCalFromFat = caloriesTotal > 0 ? (fatKcal / caloriesTotal) * 100 : 0;
+//     double percentCalFromSugar = caloriesTotal > 0 ? (sugarKcal / caloriesTotal) * 100 : 0;
+//     double percentCalFromCarbs = caloriesTotal > 0 ? (carbsKcal / caloriesTotal) * 100 : 0;
+//     double percentSodiumByWeight = sodiumG;
+//
+//     List<String> problems = [];
+//
+//     // Check the three HPF clusters
+//     bool cluster1 = percentCalFromFat > 25 && percentSodiumByWeight >= 0.30;
+//     bool cluster2 = percentCalFromFat > 20 && percentCalFromSugar > 20;
+//     bool cluster3 = percentCalFromCarbs > 40 && percentSodiumByWeight >= 0.30;
+//
+//     if (cluster1) {
+//       problems.add("High Fat (${percentCalFromFat.toStringAsFixed(1)}% of calories)");
+//       problems.add("High Sodium (${(percentSodiumByWeight * 1000).toStringAsFixed(0)}mg per 100g)");
 //     }
+//
+//     if (cluster2) {
+//       if (!problems.contains("High Fat (${percentCalFromFat.toStringAsFixed(1)}% of calories)")) {
+//         problems.add("High Fat (${percentCalFromFat.toStringAsFixed(1)}% of calories)");
+//       }
+//       problems.add("High Sugar (${percentCalFromSugar.toStringAsFixed(1)}% of calories)");
+//     }
+//
+//     if (cluster3) {
+//       problems.add("High Carbohydrates (${percentCalFromCarbs.toStringAsFixed(1)}% of calories)");
+//       if (!problems.any((p) => p.contains("High Sodium"))) {
+//         problems.add("High Sodium (${(percentSodiumByWeight * 1000).toStringAsFixed(0)}mg per 100g)");
+//       }
+//     }
+//
+//     if (problems.isEmpty) {
+//       return HyperPalatableChecker(
+//         isHyperPalatable: false,
+//         problematicNutrients: [],
+//         color: Colors.green,
+//         icon: Icons.check,
+//       );
+//     } else {
+//       return HyperPalatableChecker(
+//         isHyperPalatable: true,
+//         problematicNutrients: problems,
+//         color: Colors.red,
+//         icon: Icons.close,
+//       );
+//     }
+//   }
 // }
 //
 // // --- NUTRITION DETAILS PAGE ---
@@ -186,12 +274,16 @@
 //     String protein = nutriments['proteins_100g']?.toString() ?? 'N/A';
 //     String carbs = nutriments['carbohydrates_100g']?.toString() ?? 'N/A';
 //     String fat = nutriments['fat_100g']?.toString() ?? 'N/A';
+//     String sugar = nutriments['sugars_100g']?.toString() ?? 'N/A';
+//     String sodium = nutriments['sodium_100g']?.toString() ?? 'N/A';
+//
+//     // Evaluate using scientific HPF criteria
+//     HyperPalatableChecker hpfCheck = HyperPalatableChecker.evaluate(nutriments);
 //
 //     return Scaffold(
 //       appBar: AppBar(
-//         // The back arrow appears here automatically!
-//           title: const Text("Nutrition Facts"),
-//           backgroundColor: Colors.purple
+//         title: const Text("Nutrition Facts"),
+//         backgroundColor: Colors.blue,
 //       ),
 //       body: SingleChildScrollView(
 //         child: Column(
@@ -204,15 +296,97 @@
 //               child: Column(
 //                 crossAxisAlignment: CrossAxisAlignment.start,
 //                 children: [
-//                   Text(productName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+//                   // Product name with health indicator
+//                   Row(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       Expanded(
+//                         child: Text(
+//                           productName,
+//                           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+//                         ),
+//                       ),
+//                       const SizedBox(width: 8),
+//                       Icon(
+//                         hpfCheck.icon,
+//                         color: hpfCheck.color,
+//                         size: 40,
+//                       ),
+//                     ],
+//                   ),
+//                   const SizedBox(height: 8),
 //                   Text("Brand: $brands", style: const TextStyle(fontSize: 18, color: Colors.grey)),
+//                   const SizedBox(height: 12),
+//
+//                   // Health Status - Simple and Clear
+//                   if (hpfCheck.isHyperPalatable)
+//                     Container(
+//                       padding: const EdgeInsets.all(12),
+//                       decoration: BoxDecoration(
+//                         color: Colors.red.withOpacity(0.1),
+//                         borderRadius: BorderRadius.circular(8),
+//                         border: Border.all(color: Colors.red, width: 2),
+//                       ),
+//                       child: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: [
+//                           const Text(
+//                             "⚠️ Hyper-Palatable Food",
+//                             style: TextStyle(
+//                               fontSize: 18,
+//                               fontWeight: FontWeight.bold,
+//                               color: Colors.red,
+//                             ),
+//                           ),
+//                           const SizedBox(height: 8),
+//                           const Text(
+//                             "Problematic nutrients:",
+//                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+//                           ),
+//                           const SizedBox(height: 4),
+//                           ...hpfCheck.problematicNutrients.map((nutrient) => Padding(
+//                             padding: const EdgeInsets.only(left: 8, top: 4),
+//                             child: Row(
+//                               children: [
+//                                 const Text("• ", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+//                                 Expanded(child: Text(nutrient, style: const TextStyle(fontSize: 16))),
+//                               ],
+//                             ),
+//                           )),
+//                         ],
+//                       ),
+//                     )
+//                   else
+//                     Container(
+//                       padding: const EdgeInsets.all(12),
+//                       decoration: BoxDecoration(
+//                         color: Colors.green.withOpacity(0.1),
+//                         borderRadius: BorderRadius.circular(8),
+//                         border: Border.all(color: Colors.green, width: 2),
+//                       ),
+//                       child: const Row(
+//                         children: [
+//                           Icon(Icons.check_circle, color: Colors.green, size: 24),
+//                           SizedBox(width: 8),
+//                           Expanded(
+//                             child: Text(
+//                               "Not Hyper-Palatable - Balanced nutritional profile",
+//                               style: TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold),
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//
 //                   const Divider(height: 30),
 //                   const Text("Nutrition per 100g", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
 //                   const SizedBox(height: 10),
 //                   _buildNutrientRow("Calories", "$calories kcal"),
 //                   _buildNutrientRow("Protein", "${protein}g"),
 //                   _buildNutrientRow("Carbohydrates", "${carbs}g"),
+//                   _buildNutrientRow("Sugar", "${sugar}g"),
 //                   _buildNutrientRow("Fat", "${fat}g"),
+//                   _buildNutrientRow("Sodium", "${sodium}g (${(double.tryParse(sodium) ?? 0) * 1000}mg)"),
 //                   const Divider(height: 30),
 //                   const Text("Ingredients", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
 //                   const SizedBox(height: 8),
@@ -318,26 +492,24 @@ class _PhotoAppState extends State<PhotoApp> {
 
     if (barcodes.isEmpty) {
       _showMessage("No barcode found", "Try getting closer or improving light.");
-      setState(() { _image = null; }); // Reset if nothing found
+      setState(() { _image = null; });
     } else {
       String barcodeValue = barcodes.first.rawValue ?? "";
       final foodData = await _lookupFoodData(barcodeValue);
 
       if (foodData != null && mounted) {
-        // NAVIGATE to the new page
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => NutritionDetailsPage(barcode: barcodeValue, foodData: foodData),
           ),
         ).then((_) {
-          // THIS RUNS WHEN YOU CLICK THE BACK ARROW
           setState(() {
-            _image = null; // Clears the image so the scan button shows again
+            _image = null;
           });
         });
       } else {
         _showMessage("Barcode: $barcodeValue", "Food not found in database");
-        setState(() { _image = null; }); // Reset if API fails
+        setState(() { _image = null; });
       }
     }
   }
@@ -394,7 +566,7 @@ class _PhotoAppState extends State<PhotoApp> {
                 ),
               ],
             )
-                : const CircularProgressIndicator(color: Colors.blue), // Show loading while scanning
+                : const CircularProgressIndicator(color: Colors.blue),
           ),
           if (_image == null)
             Positioned(
@@ -412,13 +584,89 @@ class _PhotoAppState extends State<PhotoApp> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
-                  const Icon(Icons.arrow_downward, size: 40, color: Colors.blue),
+                  const Icon(Icons.arrow_downward, size: 40, color: Colors.white),
                 ],
               ),
             ),
         ],
       ),
     );
+  }
+}
+
+// --- HYPER-PALATABLE FOOD CHECKER (Based on Fazzino et al., 2019) ---
+class HyperPalatableChecker {
+  final bool isHyperPalatable;
+  final List<String> problematicNutrients;
+  final Color color;
+  final IconData icon;
+
+  HyperPalatableChecker({
+    required this.isHyperPalatable,
+    required this.problematicNutrients,
+    required this.color,
+    required this.icon,
+  });
+
+  static HyperPalatableChecker evaluate(Map<String, dynamic> nutriments) {
+    // Extract values per 100g
+    double caloriesTotal = (nutriments['energy-kcal_100g'] ?? 0).toDouble();
+    double fatG = (nutriments['fat_100g'] ?? 0).toDouble();
+    double sugarsG = (nutriments['sugars_100g'] ?? 0).toDouble();
+    double carbsG = (nutriments['carbohydrates_100g'] ?? 0).toDouble();
+    double sodiumG = (nutriments['sodium_100g'] ?? 0).toDouble();
+
+    // Calculate percentages
+    double fatKcal = fatG * 9;
+    double sugarKcal = sugarsG * 4;
+    double carbsKcal = carbsG * 4;
+
+    double percentCalFromFat = caloriesTotal > 0 ? (fatKcal / caloriesTotal) * 100 : 0;
+    double percentCalFromSugar = caloriesTotal > 0 ? (sugarKcal / caloriesTotal) * 100 : 0;
+    double percentCalFromCarbs = caloriesTotal > 0 ? (carbsKcal / caloriesTotal) * 100 : 0;
+    double percentSodiumByWeight = sodiumG; // This is already % (g per 100g = %)
+
+    List<String> problems = [];
+
+    // Check the three HPF clusters
+    bool cluster1 = percentCalFromFat > 25 && percentSodiumByWeight >= 0.30;
+    bool cluster2 = percentCalFromFat > 20 && percentCalFromSugar > 20;
+    bool cluster3 = percentCalFromCarbs > 40 && percentSodiumByWeight >= 0.30;
+
+    if (cluster1) {
+      problems.add("High Fat (${percentCalFromFat.toStringAsFixed(1)}% of calories)");
+      problems.add("High Sodium (${percentSodiumByWeight.toStringAsFixed(2)}% by weight, ${(percentSodiumByWeight * 1000).toStringAsFixed(0)}mg per 100g)");
+    }
+
+    if (cluster2) {
+      if (!problems.any((p) => p.contains("High Fat"))) {
+        problems.add("High Fat (${percentCalFromFat.toStringAsFixed(1)}% of calories)");
+      }
+      problems.add("High Sugar (${percentCalFromSugar.toStringAsFixed(1)}% of calories)");
+    }
+
+    if (cluster3) {
+      problems.add("High Carbohydrates (${percentCalFromCarbs.toStringAsFixed(1)}% of calories)");
+      if (!problems.any((p) => p.contains("High Sodium"))) {
+        problems.add("High Sodium (${percentSodiumByWeight.toStringAsFixed(2)}% by weight, ${(percentSodiumByWeight * 1000).toStringAsFixed(0)}mg per 100g)");
+      }
+    }
+
+    if (problems.isEmpty) {
+      return HyperPalatableChecker(
+        isHyperPalatable: false,
+        problematicNutrients: [],
+        color: Colors.green,
+        icon: Icons.check,
+      );
+    } else {
+      return HyperPalatableChecker(
+        isHyperPalatable: true,
+        problematicNutrients: problems,
+        color: Colors.red,
+        icon: Icons.close,
+      );
+    }
   }
 }
 
@@ -441,32 +689,125 @@ class NutritionDetailsPage extends StatelessWidget {
     String protein = nutriments['proteins_100g']?.toString() ?? 'N/A';
     String carbs = nutriments['carbohydrates_100g']?.toString() ?? 'N/A';
     String fat = nutriments['fat_100g']?.toString() ?? 'N/A';
+    String sugar = nutriments['sugars_100g']?.toString() ?? 'N/A';
+    String sodium = nutriments['sodium_100g']?.toString() ?? 'N/A';
+
+    // Evaluate using scientific HPF criteria
+    HyperPalatableChecker hpfCheck = HyperPalatableChecker.evaluate(nutriments);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Nutrition Facts"),
+        title: const Text(
+          "Nutrition Facts",
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.blue,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // IMAGE AT THE TOP
             if (imageUrl.isNotEmpty)
               Image.network(imageUrl, width: double.infinity, height: 250, fit: BoxFit.contain),
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(productName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  // Product name with health indicator
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          productName,
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        hpfCheck.icon,
+                        color: hpfCheck.color,
+                        size: 40,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   Text("Brand: $brands", style: const TextStyle(fontSize: 18, color: Colors.grey)),
+                  const SizedBox(height: 12),
+
+                  // Health Status - Simple and Clear
+                  if (hpfCheck.isHyperPalatable)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red, width: 2),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "⚠️ Hyper-Palatable Food",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Problematic nutrients:",
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          ...hpfCheck.problematicNutrients.map((nutrient) => Padding(
+                            padding: const EdgeInsets.only(left: 8, top: 4),
+                            child: Row(
+                              children: [
+                                const Text("• ", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                Expanded(child: Text(nutrient, style: const TextStyle(fontSize: 16))),
+                              ],
+                            ),
+                          )),
+                        ],
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green, width: 2),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green, size: 24),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Not Hyper-Palatable - Balanced nutritional profile",
+                              style: TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   const Divider(height: 30),
                   const Text("Nutrition per 100g", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
                   _buildNutrientRow("Calories", "$calories kcal"),
                   _buildNutrientRow("Protein", "${protein}g"),
                   _buildNutrientRow("Carbohydrates", "${carbs}g"),
+                  _buildNutrientRow("Sugar", "${sugar}g"),
                   _buildNutrientRow("Fat", "${fat}g"),
+                  _buildNutrientRow("Sodium", "${sodium}g (${(double.tryParse(sodium) ?? 0) * 1000}mg)"),
                   const Divider(height: 30),
                   const Text("Ingredients", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
