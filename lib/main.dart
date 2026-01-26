@@ -169,7 +169,7 @@
 //                     textAlign: TextAlign.center,
 //                   ),
 //                   const SizedBox(height: 10),
-//                   const Icon(Icons.arrow_downward, size: 40, color: Colors.blue),
+//                   const Icon(Icons.arrow_downward, size: 40, color: Colors.white),
 //                 ],
 //               ),
 //             ),
@@ -209,7 +209,7 @@
 //     double percentCalFromFat = caloriesTotal > 0 ? (fatKcal / caloriesTotal) * 100 : 0;
 //     double percentCalFromSugar = caloriesTotal > 0 ? (sugarKcal / caloriesTotal) * 100 : 0;
 //     double percentCalFromCarbs = caloriesTotal > 0 ? (carbsKcal / caloriesTotal) * 100 : 0;
-//     double percentSodiumByWeight = sodiumG;
+//     double percentSodiumByWeight = sodiumG; // This is already % (g per 100g = %)
 //
 //     List<String> problems = [];
 //
@@ -220,11 +220,11 @@
 //
 //     if (cluster1) {
 //       problems.add("High Fat (${percentCalFromFat.toStringAsFixed(1)}% of calories)");
-//       problems.add("High Sodium (${(percentSodiumByWeight * 1000).toStringAsFixed(0)}mg per 100g)");
+//       problems.add("High Sodium (${percentSodiumByWeight.toStringAsFixed(2)}% by weight, ${(percentSodiumByWeight * 1000).toStringAsFixed(0)}mg per 100g)");
 //     }
 //
 //     if (cluster2) {
-//       if (!problems.contains("High Fat (${percentCalFromFat.toStringAsFixed(1)}% of calories)")) {
+//       if (!problems.any((p) => p.contains("High Fat"))) {
 //         problems.add("High Fat (${percentCalFromFat.toStringAsFixed(1)}% of calories)");
 //       }
 //       problems.add("High Sugar (${percentCalFromSugar.toStringAsFixed(1)}% of calories)");
@@ -233,7 +233,7 @@
 //     if (cluster3) {
 //       problems.add("High Carbohydrates (${percentCalFromCarbs.toStringAsFixed(1)}% of calories)");
 //       if (!problems.any((p) => p.contains("High Sodium"))) {
-//         problems.add("High Sodium (${(percentSodiumByWeight * 1000).toStringAsFixed(0)}mg per 100g)");
+//         problems.add("High Sodium (${percentSodiumByWeight.toStringAsFixed(2)}% by weight, ${(percentSodiumByWeight * 1000).toStringAsFixed(0)}mg per 100g)");
 //       }
 //     }
 //
@@ -282,15 +282,21 @@
 //
 //     return Scaffold(
 //       appBar: AppBar(
-//         title: const Text("Nutrition Facts"),
+//         title: const Text(
+//           "Nutrition Facts",
+//           style: TextStyle(color: Colors.white),
+//         ),
 //         backgroundColor: Colors.blue,
+//         iconTheme: const IconThemeData(color: Colors.white),
 //       ),
 //       body: SingleChildScrollView(
 //         child: Column(
 //           crossAxisAlignment: CrossAxisAlignment.start,
 //           children: [
+//             // IMAGE AT THE TOP
 //             if (imageUrl.isNotEmpty)
 //               Image.network(imageUrl, width: double.infinity, height: 250, fit: BoxFit.contain),
+//
 //             Padding(
 //               padding: const EdgeInsets.all(16.0),
 //               child: Column(
@@ -615,6 +621,7 @@ class HyperPalatableChecker {
     double sugarsG = (nutriments['sugars_100g'] ?? 0).toDouble();
     double carbsG = (nutriments['carbohydrates_100g'] ?? 0).toDouble();
     double sodiumG = (nutriments['sodium_100g'] ?? 0).toDouble();
+    double saltG = (nutriments['salt_100g'] ?? 0).toDouble();
 
     // Calculate percentages
     double fatKcal = fatG * 9;
@@ -624,32 +631,40 @@ class HyperPalatableChecker {
     double percentCalFromFat = caloriesTotal > 0 ? (fatKcal / caloriesTotal) * 100 : 0;
     double percentCalFromSugar = caloriesTotal > 0 ? (sugarKcal / caloriesTotal) * 100 : 0;
     double percentCalFromCarbs = caloriesTotal > 0 ? (carbsKcal / caloriesTotal) * 100 : 0;
-    double percentSodiumByWeight = sodiumG; // This is already % (g per 100g = %)
+
+    // Salt as percentage of weight (g per 100g = %)
+    double percentSaltByWeight = saltG;
+    // Sodium as percentage of weight (used for the research criteria)
+    double percentSodiumByWeight = sodiumG;
 
     List<String> problems = [];
 
     // Check the three HPF clusters
-    bool cluster1 = percentCalFromFat > 25 && percentSodiumByWeight >= 0.30;
+    bool cluster1 = percentCalFromFat > 25 && percentSodiumByWeight >= 0.20;
     bool cluster2 = percentCalFromFat > 20 && percentCalFromSugar > 20;
-    bool cluster3 = percentCalFromCarbs > 40 && percentSodiumByWeight >= 0.30;
+    bool cluster3 = percentCalFromCarbs > 40 && percentSodiumByWeight >= 0.20;
 
-    if (cluster1) {
+    //
+    bool highFat = cluster1 || cluster2;
+    bool highSalt = cluster1 || cluster3;
+    bool highSugar = cluster2;
+    bool highCarbs = cluster3;
+
+// Add problems to the list
+    if (highFat) {
       problems.add("High Fat (${percentCalFromFat.toStringAsFixed(1)}% of calories)");
-      problems.add("High Sodium (${percentSodiumByWeight.toStringAsFixed(2)}% by weight, ${(percentSodiumByWeight * 1000).toStringAsFixed(0)}mg per 100g)");
     }
 
-    if (cluster2) {
-      if (!problems.any((p) => p.contains("High Fat"))) {
-        problems.add("High Fat (${percentCalFromFat.toStringAsFixed(1)}% of calories)");
-      }
+    if (highSalt) {
+      problems.add("High Salt (${percentSaltByWeight.toStringAsFixed(2)}% by weight)");
+    }
+
+    if (highSugar) {
       problems.add("High Sugar (${percentCalFromSugar.toStringAsFixed(1)}% of calories)");
     }
 
-    if (cluster3) {
+    if (highCarbs) {
       problems.add("High Carbohydrates (${percentCalFromCarbs.toStringAsFixed(1)}% of calories)");
-      if (!problems.any((p) => p.contains("High Sodium"))) {
-        problems.add("High Sodium (${percentSodiumByWeight.toStringAsFixed(2)}% by weight, ${(percentSodiumByWeight * 1000).toStringAsFixed(0)}mg per 100g)");
-      }
     }
 
     if (problems.isEmpty) {
@@ -690,7 +705,8 @@ class NutritionDetailsPage extends StatelessWidget {
     String carbs = nutriments['carbohydrates_100g']?.toString() ?? 'N/A';
     String fat = nutriments['fat_100g']?.toString() ?? 'N/A';
     String sugar = nutriments['sugars_100g']?.toString() ?? 'N/A';
-    String sodium = nutriments['sodium_100g']?.toString() ?? 'N/A';
+    String salt = nutriments['salt_100g']?.toString() ?? 'N/A';
+    double saltValue = double.tryParse(salt) ?? 0;
 
     // Evaluate using scientific HPF criteria
     HyperPalatableChecker hpfCheck = HyperPalatableChecker.evaluate(nutriments);
@@ -752,7 +768,7 @@ class NutritionDetailsPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "⚠️ Hyper-Palatable Food",
+                            "Hyper-Palatable Food",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -807,7 +823,7 @@ class NutritionDetailsPage extends StatelessWidget {
                   _buildNutrientRow("Carbohydrates", "${carbs}g"),
                   _buildNutrientRow("Sugar", "${sugar}g"),
                   _buildNutrientRow("Fat", "${fat}g"),
-                  _buildNutrientRow("Sodium", "${sodium}g (${(double.tryParse(sodium) ?? 0) * 1000}mg)"),
+                  _buildNutrientRow("Salt", "${salt}g (${saltValue.toStringAsFixed(2)}% of weight)"),
                   const Divider(height: 30),
                   const Text("Ingredients", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
